@@ -1,25 +1,39 @@
-from skill_gap_analysis import Skill, LearningPath, SkillGapAnalysis
+from src.skill_gap_analysis import Skill, LearningPath, identify_skill_gaps, recommend_learning_path, generate_learning_plan
+import pytest
 
-def test_generate_personalized_learning_path():
-    skills = [Skill("Python", 1), Skill("Java", 2)]
-    learning_paths = [
-        LearningPath([Skill("Python", 1), Skill("Java", 2)], ["Python tutorial", "Java tutorial"]),
-        LearningPath([Skill("C++", 3), Skill("JavaScript", 4)], ["C++ tutorial", "JavaScript tutorial"])
-    ]
-    analysis = SkillGapAnalysis(skills, learning_paths)
-    user_skills = [Skill("Python", 1)]
-    result = analysis.generate_personalized_learning_path(user_skills)
-    assert result.skills == [Skill("Java", 2)]
-    assert result.recommended_resources == ["Java tutorial"]
+def test_identify_skill_gaps():
+    user_skills = [Skill("Python", 3), Skill("Java", 2)]
+    required_skills = [Skill("Python", 3), Skill("Java", 3), Skill("C++", 2)]
+    expected_gaps = [Skill("Java", 3), Skill("C++", 2)]
+    assert identify_skill_gaps(user_skills, required_skills) == expected_gaps
 
-def test_save_to_json():
-    skills = [Skill("Python", 1), Skill("Java", 2)]
+def test_recommend_learning_path():
+    skill_gaps = [Skill("Java", 3), Skill("C++", 2)]
     learning_paths = [
-        LearningPath([Skill("Python", 1), Skill("Java", 2)], ["Python tutorial", "Java tutorial"]),
-        LearningPath([Skill("C++", 3), Skill("JavaScript", 4)], ["C++ tutorial", "JavaScript tutorial"])
+        LearningPath([Skill("Java", 3), Skill("C++", 2)], 6),
+        LearningPath([Skill("Java", 3), Skill("C++", 3)], 9),
+        LearningPath([Skill("Python", 3), Skill("C++", 2)], 6)
     ]
-    analysis = SkillGapAnalysis(skills, learning_paths)
-    analysis.save_to_json("test.json")
-    loaded_analysis = SkillGapAnalysis.load_from_json("test.json")
-    assert loaded_analysis.skills == skills
-    assert loaded_analysis.learning_paths == learning_paths
+    expected_path = learning_paths[0]
+    assert recommend_learning_path(skill_gaps, learning_paths) == expected_path
+
+def test_generate_learning_plan():
+    user_skills = [Skill("Python", 3), Skill("Java", 2)]
+    required_skills = [Skill("Python", 3), Skill("Java", 3), Skill("C++", 2)]
+    learning_paths = [
+        LearningPath([Skill("Java", 3), Skill("C++", 2)], 6),
+        LearningPath([Skill("Java", 3), Skill("C++", 3)], 9),
+        LearningPath([Skill("Python", 3), Skill("C++", 2)], 6)
+    ]
+    expected_path = learning_paths[0]
+    assert generate_learning_plan(user_skills, required_skills, learning_paths) == expected_path
+
+def test_edge_case_no_gaps():
+    user_skills = [Skill("Python", 3), Skill("Java", 3), Skill("C++", 2)]
+    required_skills = [Skill("Python", 3), Skill("Java", 3), Skill("C++", 2)]
+    learning_paths = [
+        LearningPath([Skill("Java", 3), Skill("C++", 2)], 6),
+        LearningPath([Skill("Java", 3), Skill("C++", 3)], 9),
+        LearningPath([Skill("Python", 3), Skill("C++", 2)], 6)
+    ]
+    assert generate_learning_plan(user_skills, required_skills, learning_paths) is None
